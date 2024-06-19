@@ -39,7 +39,7 @@ export function writeConf(minzoom, maxzoom, format, paths) {
             doc.getElementsByTagName('CacheTileFormat')[0].textContent =
                 formattedFormat;
 
-            fs.writeFile(`${paths.layerPath}/conf.xml`, doc, (error) => {
+            fs.writeFile(`${paths.layerPath}/conf.xml`, doc.toString(), (error) => {
                 if (error) reject(error);
                 resolve(paths);
             });
@@ -64,7 +64,7 @@ export function writeBounds(bounds, paths) {
             doc.getElementsByTagName('YMin')[0].textContent = mercatorBounds[1];
             doc.getElementsByTagName('XMax')[0].textContent = mercatorBounds[2];
             doc.getElementsByTagName('YMax')[0].textContent = mercatorBounds[3];
-            fs.writeFile(`${paths.layerPath}/conf.cdi`, doc, (error) => {
+            fs.writeFile(`${paths.layerPath}/conf.cdi`, doc.toString(), (error) => {
                 if (error) reject(error);
                 resolve(paths.layerPath);
             });
@@ -95,7 +95,7 @@ export function writeItemInfo(bounds, paths) {
             doc.getElementsByTagName('ymin')[0].textContent = mercatorBounds[1];
             doc.getElementsByTagName('xmax')[0].textContent = mercatorBounds[2];
             doc.getElementsByTagName('ymax')[0].textContent = mercatorBounds[3];
-            fs.writeFile(`${paths.esriInfoPath}/iteminfo.xml`, doc, (error) => {
+            fs.writeFile(`${paths.esriInfoPath}/iteminfo.xml`, doc.toString(), (error) => {
                 if (error) reject(error);
                 fs.copy(itemInfoTemplatePath,
                         `${paths.esriInfoPath}/item.pkinfo`,
@@ -227,8 +227,7 @@ export function copyTiles(bounds, minzoom, maxzoom, url, layerPath) {
     });
 }
 
-export function xyz2tpk(bounds, minzoom, maxzoom, url, format, directory,
-                        callback) {
+export function xyz2tpk_callback(bounds, minzoom, maxzoom, url, format, directory, callback) {
     generateDirectories(directory)
         .then(writeLyrFile)
         .then(writeConf.bind(null, minzoom, maxzoom, format))
@@ -241,3 +240,12 @@ export function xyz2tpk(bounds, minzoom, maxzoom, url, format, directory,
         .catch(callback);
 }
 
+export function xyz2tpk(bounds, minzoom, maxzoom, url, format, directory) {
+    generateDirectories(directory)
+        .then(writeLyrFile)
+        .then(writeConf.bind(null, minzoom, maxzoom, format))
+        .then(writeItemInfo.bind(null, bounds))
+        .then(writeJson.bind(null, minzoom, maxzoom, bounds))
+        .then(writeBounds.bind(null, bounds))
+        .then(copyTiles.bind(null, bounds, minzoom, maxzoom, url));
+}
